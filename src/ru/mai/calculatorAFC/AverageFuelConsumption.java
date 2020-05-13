@@ -80,7 +80,7 @@ public class AverageFuelConsumption {
     }
 
     /**
-     * Вычисляет средний расход топлива за день по данным из файла "input.txt" и записывает это значение в файл "output.txt"
+     * Вычисляет средний расход топлива за день по данным из файла "input.txt" и записывает это значение или текст ошибки в файл "output.txt"
      */
     public void calculationOfAverageFuelConsumption() {
         try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(OUTPUT_FILE), StandardCharsets.UTF_8))) {
