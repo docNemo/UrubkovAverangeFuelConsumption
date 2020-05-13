@@ -1,12 +1,8 @@
 package ru.mai;
 
 import ru.mai.calculatorAFC.AverageFuelConsumption;
-import ru.mai.exceptions.NoDataException;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.charset.UnsupportedCharsetException;
-import java.util.Scanner;
+import java.io.IOException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,59 +16,36 @@ import java.util.logging.SimpleFormatter;
 public class UrubkovAverageFuelConsumption {
     /**
      * Предназначен для обеспечения логирования исключительных ситуаций,
-     * появляющихся в ходе выполнения всей программы
+     * появляющихся в ходе выполнения всей программы и, в случае корректного выполнения, времения выполнения
      */
     private static Logger systemLogger = Logger.getLogger("system");
-
-    private static Logger timeLogger = Logger.getLogger("execution time");
     /**
      * Хранит код ошибки для организации выхода из программы
      */
-    private static byte ERROR_CODE = -1;
+    private static final byte ERROR_CODE = -1;
 
     public static void main(String[] args) {
-        long t1 = System.currentTimeMillis();
+        try {
+            long startTime = System.currentTimeMillis();
 
-        initializeLogger();
+            initializeLogger();
 
-        try (Scanner in = new Scanner(new File("input.txt"))) {
             AverageFuelConsumption calculator = new AverageFuelConsumption();
+            calculator.calculationOfAverageFuelConsumption();
 
-            double averageFuelConsumption;
-            try {
-                averageFuelConsumption = calculator.calculationOfAverageFuelConsumption(in);
-                try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("output.txt"), StandardCharsets.UTF_8))) {
-                    out.write("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
-                    System.out.println("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
-                } catch(UnsupportedCharsetException e) {
-                    e.printStackTrace();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
-            } catch (NoDataException e) {
-                systemLogger.log(Level.SEVERE,
-                        "Невозможно продолжить выполнение программы - отсутствуют данные");
-                System.out.println("Error!");
-                System.exit(ERROR_CODE);
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("Файл \"input.txt\" не найден.\n" +
-                    "Дальнейшее выполнение программы не возможно.");
-            systemLogger.log(Level.SEVERE, "Файл \"input.txt\" не найден.", e);
-            System.exit(ERROR_CODE);
+            long execTime = System.currentTimeMillis() - startTime;
+            systemLogger.info("Время выполнения " + execTime + "нс.");
         } catch (Exception e) {
-            systemLogger.log(Level.SEVERE,
-                    "Непредвиденная ошибка",
-                    e);
+            System.out.println("Непредвиденная ошибка. Программа завершает свою работу.");
+            systemLogger.log(Level.SEVERE, "Непредвиденная ошибка", e);
+            System.exit(ERROR_CODE);
         }
-        
-        Long rt = System.currentTimeMillis() - t1;
-        timeLogger.info(rt.toString());
+
     }
 
+    /**
+     * Инициализирует основной логгер
+     */
     private static void initializeLogger() {
         try {
             FileHandler calcLogsFH = new FileHandler("system.log");

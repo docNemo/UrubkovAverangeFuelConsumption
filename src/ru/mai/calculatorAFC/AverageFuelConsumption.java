@@ -2,7 +2,16 @@ package ru.mai.calculatorAFC;
 
 import ru.mai.exceptions.NoDataException;
 
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.Writer;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Scanner;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -12,7 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Предназначен для вычисления среднего расчета топлива в день
+ * Предназначен для вычисления среднего расчета топлива в день, по данным хранящимся в файле "input.txt".
+ * Результат записывается в файл "output.txt"
  *
  * @author Урубков Владислав
  */
@@ -28,6 +38,18 @@ public class AverageFuelConsumption {
      */
     private static final byte HOURS_PER_DAY = 24;
     /**
+     * Хранит код ошибки для организации выхода из программы
+     */
+    private static final byte ERROR_CODE = -1;
+    /**
+     * Хранит относительный путь до файла с входными данными
+     */
+    private static final String INPUT_FILE = "input.txt";
+    /**
+     * Хранит относительный путь до файла с выходними данными
+     */
+    private static final String OUTPUT_FILE = "output.txt";
+    /**
      * Хранит паттерн для проверки на корректность введенной строки
      */
     private static final Pattern PatCheckCorrectInput = Pattern.compile("Осталось:\\s*([^-][0-9]+\\.?[0-9]+)\\s*л\\.?");
@@ -35,19 +57,9 @@ public class AverageFuelConsumption {
     /**
      * Предназначен для обеспечения логирования исключительных ситуаций,
      * появляющихся в ходе выполнения метода calculationOfAverageFuelConsumption
-     * {@link AverageFuelConsumption#calculationOfAverageFuelConsumption(Scanner)}
+     * {@link AverageFuelConsumption#calculationOfAverageFuelConsumption()}
      */
     private Logger calculationLogger = Logger.getLogger("calculationLogs");
-
-    /**
-     * Если true, файл лога вычислений не удалось создать из-за политики безопасности
-     */
-    private boolean isSecurityException = false;
-
-    /**
-     * Если true, файл лога вычислений не удалось создать из-за ошибки ввода-вывода
-     */
-    private boolean isIOException = false;
 
     public AverageFuelConsumption() {
         try {
@@ -57,15 +69,54 @@ public class AverageFuelConsumption {
             calculationLogger.addHandler(calcLogsFH);
 
         } catch (SecurityException e) {
-            isSecurityException = true;
             calculationLogger.log(Level.SEVERE,
                     "Не удалось создать файл лога вычислений из-за политики безопасности.",
                     e);
         } catch (IOException e) {
-            isIOException = true;
             calculationLogger.log(Level.SEVERE,
                     "Не удалось создать файл лога вычислений из-за ошибки ввода-вывода.",
                     e);
+        }
+    }
+
+    /**
+     * Вычисляет средний расход топлива за день по данным из файла "input.txt" и записывает это значение в файл "output.txt"
+     */
+    public void calculationOfAverageFuelConsumption() {
+        try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(OUTPUT_FILE), StandardCharsets.UTF_8))) {
+            try (Scanner in = new Scanner(new InputStreamReader(new FileInputStream(INPUT_FILE), StandardCharsets.UTF_8))) {
+                double averageFuelConsumption;
+
+                try {
+                    averageFuelConsumption = calculation(in);
+                    out.write("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
+                } catch (NoDataException e) {
+                    calculationLogger.log(Level.SEVERE,
+                            "Невозможно продолжить выполнение программы - отсутствуют данные");
+                    out.write("Вычисление невозможно.\n" +
+                            "В файле \"input.txt\" отсутствуют корректные входные данные.");
+                    System.exit(ERROR_CODE);
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println("Файл \"input.txt\" не найден.\n" +
+                        "Дальнейшее выполнение программы не возможно.");
+                calculationLogger.log(Level.SEVERE, "Файл \"input.txt\" не найден.", e);
+                out.write("Файл \"input.txt\" не найден.\n" +
+                        "Вычисление невозможно.");
+                System.exit(ERROR_CODE);
+            }
+        } catch (UnsupportedCharsetException e) {
+            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
+            calculationLogger.log(Level.SEVERE, "Ошибка кодировки файла \"output.txt\".", e);
+            System.exit(ERROR_CODE);
+        } catch (FileNotFoundException e) {
+            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
+            calculationLogger.log(Level.SEVERE, "Файл \"output.txt\" не найден.", e);
+            System.exit(ERROR_CODE);
+        } catch (IOException e) {
+            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
+            calculationLogger.log(Level.SEVERE, "Не удалось открыть файл \"output.txt\" из-за ошибки ввода-вывода", e);
+            System.exit(ERROR_CODE);
         }
     }
 
@@ -76,7 +127,7 @@ public class AverageFuelConsumption {
      * @return рассчтанное значение среднего расхода топлива в день
      * @throws NoDataException
      */
-    public double calculationOfAverageFuelConsumption(Scanner in) throws NoDataException {
+    private double calculation(Scanner in) throws NoDataException {
         FuelTank firstIndicationVolume = inputVolume(in);
 
         if (firstIndicationVolume == null) {
@@ -128,13 +179,5 @@ public class AverageFuelConsumption {
             }
         }
         return null;
-    }
-
-    public boolean isSecurityException() {
-        return isSecurityException;
-    }
-
-    public boolean isIOException() {
-        return isIOException;
     }
 }
