@@ -83,38 +83,13 @@ public class AverageFuelConsumption {
      * Вычисляет средний расход топлива за день по данным из файла "input.txt" и записывает это значение или текст ошибки в файл "output.txt"
      */
     public void calculationOfAverageFuelConsumption() {
-        try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(OUTPUT_FILE), StandardCharsets.UTF_8))) {
-            try (Scanner in = new Scanner(new InputStreamReader(new FileInputStream(INPUT_FILE), StandardCharsets.UTF_8))) {
-                double averageFuelConsumption;
+        CalculationData indicationForCalculation = input();
 
-                try {
-                    CalculationData indicationForCalculation = inputFirstAndLAstIndication(in);
-                    averageFuelConsumption = calculation(indicationForCalculation);
-                    out.write("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
-                } catch (NoDataException e) {
-                    calculationLogger.log(Level.SEVERE,
-                            "Невозможно продолжить выполнение программы - отсутствуют данные");
-                    out.write("Вычисление невозможно.\n" +
-                            "В файле \"input.txt\" отсутствуют корректные входные данные.");
-                } finally {
-                    out.close();
-                }
-            } catch (FileNotFoundException e) {
-                System.out.println("Файл \"input.txt\" не найден.\n" +
-                        "Дальнейшее выполнение программы не возможно.");
-                calculationLogger.log(Level.SEVERE, "Файл \"input.txt\" не найден.", e);
-                out.write("Файл \"input.txt\" не найден.\n" +
-                        "Вычисление невозможно.");
-            }
-        } catch (UnsupportedCharsetException e) {
-            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
-            calculationLogger.log(Level.SEVERE, "Ошибка кодировки файла \"output.txt\".", e);
-        } catch (FileNotFoundException e) {
-            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
-            calculationLogger.log(Level.SEVERE, "Файл \"output.txt\" не найден.", e);
-        } catch (IOException e) {
-            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
-            calculationLogger.log(Level.SEVERE, "Не удалось открыть файл \"output.txt\" из-за ошибки ввода-вывода", e);
+        if (indicationForCalculation != null) {
+            double averageFuelConsumption = calculation(indicationForCalculation);
+            output(averageFuelConsumption);
+        } else {
+            output(ERROR_CODE);
         }
     }
 
@@ -189,5 +164,52 @@ public class AverageFuelConsumption {
             }
         }
         return new CalculationData(firstIndicationVolume, lastIndicationVolume, hours);
+    }
+
+    /**
+     * Осуществляет чтение входных данных, и возвращает первое, последнее показания и время в часах
+     *
+     * @return объект с первым и последним значениями объема топлива и временем в часах, за которое были сделаны измерения
+     */
+    private CalculationData input() {
+        CalculationData indicationForCalculation = null;
+        try (Scanner in = new Scanner(new InputStreamReader(new FileInputStream(INPUT_FILE), StandardCharsets.UTF_8))) {
+            try {
+                indicationForCalculation = inputFirstAndLAstIndication(in);
+            } catch (NoDataException e) {
+                calculationLogger.log(Level.SEVERE,
+                        "Невозможно продолжить выполнение программы - отсутствуют данные");
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Файл \"input.txt\" не найден.\n" +
+                    "Дальнейшее выполнение программы не возможно.");
+            calculationLogger.log(Level.SEVERE, "Файл \"input.txt\" не найден.", e);
+        }
+        return indicationForCalculation;
+    }
+
+    /**
+     * Записывает в файл рассчитанное значение среднего суточного расхода с пояснением или текст ошибки о не удачном расчете
+     *
+     * @param averageFuelConsumption рассчитанное значение среднего суточного расхода (положительное число)
+     *                               или отрицательное число, означающее, что расчет провести не удалось
+     */
+    private void output(double averageFuelConsumption) {
+        try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(OUTPUT_FILE), StandardCharsets.UTF_8))) {
+            if (averageFuelConsumption >= 0) {
+                out.write("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
+            } else {
+                out.write("Расчёт выполнить не удалось.");
+            }
+        } catch (UnsupportedCharsetException e) {
+            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
+            calculationLogger.log(Level.SEVERE, "Ошибка кодировки файла \"output.txt\".", e);
+        } catch (FileNotFoundException e) {
+            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
+            calculationLogger.log(Level.SEVERE, "Файл \"output.txt\" не найден.", e);
+        } catch (IOException e) {
+            System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
+            calculationLogger.log(Level.SEVERE, "Не удалось открыть файл \"output.txt\" из-за ошибки ввода-вывода", e);
+        }
     }
 }
