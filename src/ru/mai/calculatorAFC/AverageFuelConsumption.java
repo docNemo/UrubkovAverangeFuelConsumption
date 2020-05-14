@@ -87,7 +87,7 @@ public class AverageFuelConsumption {
 
         if (indicationForCalculation != null) {
             double averageFuelConsumption = calculation(indicationForCalculation);
-            output("Средний расход топлива в день - "+ averageFuelConsumption +" л/дн.");
+            output("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
         } else {
             output("Расчет выполнить не удалось.");
         }
@@ -190,7 +190,7 @@ public class AverageFuelConsumption {
     }
 
     /**
-     * Записывает в файл рассчитанное значение среднего суточного расхода с пояснением или текст ошибки о не удачном расчете
+     * Записывает в файл переданное в параметре сообщение
      *
      * @param outputText результирующая строка для вывода
      */
