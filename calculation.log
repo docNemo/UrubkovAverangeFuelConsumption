@@ -1,6 +1,10 @@
-мая 13, 2020 2:25:28 PM ru.mai.calculatorAFC.AverageFuelConsumption inputVolume
-WARNING: Пользователем введены некорректные данные: Осталось: -240л
-мая 13, 2020 2:25:28 PM ru.mai.calculatorAFC.AverageFuelConsumption inputVolume
-WARNING: Пользователем введены некорректные данные: Осталось:290
-мая 13, 2020 2:25:28 PM ru.mai.calculatorAFC.AverageFuelConsumption inputVolume
-WARNING: Пользователем введены некорректные данные: оста ж ав
+мая 14, 2020 4:54:51 PM ru.mai.calculatorAFC.AverageFuelConsumption calculationOfAverageFuelConsumption
+SEVERE: Файл "input.txt" не найден.
+java.io.FileNotFoundException: input.txt (Не удается найти указанный файл)
+	at java.base/java.io.FileInputStream.open0(Native Method)
+	at java.base/java.io.FileInputStream.open(FileInputStream.java:213)
+	at java.base/java.io.FileInputStream.<init>(FileInputStream.java:155)
+	at java.base/java.io.FileInputStream.<init>(FileInputStream.java:110)
+	at ru.mai.calculatorAFC.AverageFuelConsumption.calculationOfAverageFuelConsumption(AverageFuelConsumption.java:87)
+	at ru.mai.UrubkovAverageFuelConsumption.main(UrubkovAverageFuelConsumption.java:34)
+

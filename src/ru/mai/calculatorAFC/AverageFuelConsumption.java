@@ -88,14 +88,16 @@ public class AverageFuelConsumption {
                 double averageFuelConsumption;
 
                 try {
-                    averageFuelConsumption = calculation(in);
+                    CalculationData indicationForCalculation = inputFirstAndLAstIndication(in);
+                    averageFuelConsumption = calculation(indicationForCalculation);
                     out.write("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
                 } catch (NoDataException e) {
                     calculationLogger.log(Level.SEVERE,
                             "Невозможно продолжить выполнение программы - отсутствуют данные");
                     out.write("Вычисление невозможно.\n" +
                             "В файле \"input.txt\" отсутствуют корректные входные данные.");
-                    System.exit(ERROR_CODE);
+                } finally {
+                    out.close();
                 }
             } catch (FileNotFoundException e) {
                 System.out.println("Файл \"input.txt\" не найден.\n" +
@@ -103,55 +105,30 @@ public class AverageFuelConsumption {
                 calculationLogger.log(Level.SEVERE, "Файл \"input.txt\" не найден.", e);
                 out.write("Файл \"input.txt\" не найден.\n" +
                         "Вычисление невозможно.");
-                System.exit(ERROR_CODE);
             }
         } catch (UnsupportedCharsetException e) {
             System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
             calculationLogger.log(Level.SEVERE, "Ошибка кодировки файла \"output.txt\".", e);
-            System.exit(ERROR_CODE);
         } catch (FileNotFoundException e) {
             System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
             calculationLogger.log(Level.SEVERE, "Файл \"output.txt\" не найден.", e);
-            System.exit(ERROR_CODE);
         } catch (IOException e) {
             System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
             calculationLogger.log(Level.SEVERE, "Не удалось открыть файл \"output.txt\" из-за ошибки ввода-вывода", e);
-            System.exit(ERROR_CODE);
         }
     }
 
     /**
      * Вычисляет средний расход топлива за день
      *
-     * @param in Поток, из которого осуществляется ввод
+     * @param indicationsForCalculation объект с первым и последним значениями объема топлива и временем в часах, за которое были сделаны измерения
      * @return рассчтанное значение среднего расхода топлива в день
-     * @throws NoDataException
      */
-    private double calculation(Scanner in) throws NoDataException {
-        FuelTank firstIndicationVolume = inputVolume(in);
+    private double calculation(CalculationData indicationsForCalculation) {
+        FuelTank firstIndicationVolume = indicationsForCalculation.getFirstIndication();
+        FuelTank lastIndicationVolume = indicationsForCalculation.getLastIndication();
+        int hours = indicationsForCalculation.getHours();
 
-        if (firstIndicationVolume == null) {
-            calculationLogger.log(Level.SEVERE,
-                    "Невозможно продолжить выполнение программы - отсутствуют данные");
-            throw new NoDataException();
-        }
-
-        FuelTank lastIndicationVolume = firstIndicationVolume;
-        int hours = 0;
-
-        while (in.hasNextLine()) {
-            FuelTank currentVolume = inputVolume(in);
-
-            if (currentVolume != null) {
-                hours++;
-
-                if (lastIndicationVolume.compareTo(currentVolume) < 0) {
-                    firstIndicationVolume.add(currentVolume.difference(lastIndicationVolume));
-                }
-
-                lastIndicationVolume = currentVolume;
-            }
-        }
         return firstIndicationVolume.difference(lastIndicationVolume) / hours * HOURS_PER_DAY;
     }
 
@@ -179,5 +156,38 @@ public class AverageFuelConsumption {
             }
         }
         return null;
+    }
+
+    /**
+     * Осуществляет чтение входных данных, и возвращает первое, последнее показания и время в часах
+     *
+     * @param in поток, из которого осуществляется чтение
+     * @return объект с первым и последним значениями объема топлива и временем в часах, за которое были сделаны измерения
+     * @throws NoDataException если в потоке нет данных или они все не корректны, "пробрасывается" исключение
+     */
+    private CalculationData inputFirstAndLAstIndication(Scanner in) throws NoDataException {
+        FuelTank firstIndicationVolume = inputVolume(in);
+
+        if (firstIndicationVolume == null) {
+            throw new NoDataException();
+        }
+
+        FuelTank lastIndicationVolume = firstIndicationVolume;
+        int hours = 0;
+
+        while (in.hasNextLine()) {
+            FuelTank currentVolume = inputVolume(in);
+
+            if (currentVolume != null) {
+                hours++;
+
+                if (lastIndicationVolume.compareTo(currentVolume) < 0) {
+                    firstIndicationVolume.add(currentVolume.difference(lastIndicationVolume));
+                }
+
+                lastIndicationVolume = currentVolume;
+            }
+        }
+        return new CalculationData(firstIndicationVolume, lastIndicationVolume, hours);
     }
 }
