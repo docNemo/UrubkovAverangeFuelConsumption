@@ -87,9 +87,9 @@ public class AverageFuelConsumption {
 
         if (indicationForCalculation != null) {
             double averageFuelConsumption = calculation(indicationForCalculation);
-            output(averageFuelConsumption);
+            output("Средний расход топлива в день - "+ averageFuelConsumption +" л/дн.");
         } else {
-            output(ERROR_CODE);
+            output("Расчет выполнить не удалось.");
         }
     }
 
@@ -177,6 +177,7 @@ public class AverageFuelConsumption {
             try {
                 indicationForCalculation = inputFirstAndLAstIndication(in);
             } catch (NoDataException e) {
+                System.out.println("Невозможно продолжить выполнение программы - отсутствуют данные");
                 calculationLogger.log(Level.SEVERE,
                         "Невозможно продолжить выполнение программы - отсутствуют данные");
             }
@@ -191,16 +192,11 @@ public class AverageFuelConsumption {
     /**
      * Записывает в файл рассчитанное значение среднего суточного расхода с пояснением или текст ошибки о не удачном расчете
      *
-     * @param averageFuelConsumption рассчитанное значение среднего суточного расхода (положительное число)
-     *                               или отрицательное число, означающее, что расчет провести не удалось
+     * @param outputText результирующая строка для вывода
      */
-    private void output(double averageFuelConsumption) {
+    private void output(String outputText) {
         try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(OUTPUT_FILE), StandardCharsets.UTF_8))) {
-            if (averageFuelConsumption >= 0) {
-                out.write("Средний расход топлива в день - " + averageFuelConsumption + " л/дн.");
-            } else {
-                out.write("Расчёт выполнить не удалось.");
-            }
+            out.write(outputText);
         } catch (UnsupportedCharsetException e) {
             System.out.println("Продолжение выполнения программы невозможно, т.к. отсутствует или поврежден файл для выходных данных \"output.txt\".");
             calculationLogger.log(Level.SEVERE, "Ошибка кодировки файла \"output.txt\".", e);
